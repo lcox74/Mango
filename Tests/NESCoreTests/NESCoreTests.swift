@@ -34,3 +34,41 @@ private func makeCartridge(program: [UInt8]) throws -> Cartridge {
   #expect(cart.prgRead(0xFFFC) == 0x00)
   #expect(cart.prgRead(0xFFFD) == 0x80)
 }
+
+@Test func addWithCarryAndStore() throws {
+  let cart = try makeCartridge(
+    program: [
+      0xA9, 0x05,  // LDA #$05
+      0x69, 0x03,  // ADC #$03
+      0x85, 0x10,  // STA $10
+    ],
+  )
+
+  let nes = Console(cartridge: cart)
+  #expect(nes.cpu.pc == 0x8000)
+
+  _ = nes.cpu.step()  // LDA
+  _ = nes.cpu.step()  // ADC
+  #expect(nes.cpu.a == 0x08)
+
+  _ = nes.cpu.step()  // STA
+  #expect(nes.read(0x0010) == 0x08)
+}
+
+@Test func branchLoop() throws {
+  let cart = try makeCartridge(
+    program: [
+      0xA2, 0x00,  // LDX #$00
+      0xE8,  // INX
+      0xE0, 0x03,  // CPX #$03
+      0xD0, 0xFB,  // BNE -4 (loop untile X == 3)
+    ],
+  )
+
+  let nes = Console(cartridge: cart)
+  for _ in 0..<20 {
+    _ = nes.cpu.step()
+  }
+
+  #expect(nes.cpu.x == 0x03)
+}
