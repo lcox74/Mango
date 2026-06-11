@@ -1,8 +1,13 @@
 import Foundation
-import NESCore
 
-let romName = "Spy vs Spy.nes"
-let secondsToProfile = 15.0
+// The profiler runs in one of two modes:
+//
+//   Profiler <scene> [seconds] [stats-path]
+//   Profiler report <sample-file>...
+//
+// The '<scene>' will run a predefined scene worload to profile and be sampled
+// by the macOS `sample` tool. The 'report' mode will parse the sample reports
+// and present them in some readable way.
 
 /// Write a line to stderr, keeping these notes out of the profiler's sampled
 /// (stdout) output.
@@ -10,34 +15,18 @@ func logErr(_ message: String) {
   FileHandle.standardError.write(Data((message + "\n").utf8))
 }
 
-/// Load the ROM into a fresh console, or bail out with a clear message.
-func loadConsole(rom name: String) -> Console {
-  let url = URL(fileURLWithPath: name)
+let args = Array(CommandLine.arguments.dropFirst())
 
-  guard FileManager.default.fileExists(atPath: url.path)
-  else { fatalError("There is no '\(name)' ROM") }
-
-  do {
-    let data = [UInt8](try Data(contentsOf: url))
-    return try Console(cartridge: Cartridge(data: data))
-  } catch {
-    fatalError("Failed to load '\(name)': \(error)")
-  }
+if args.first == "report" {
+  runReport(sampleFiles: Array(args.dropFirst()))
+  exit(0)
 }
 
-let nes = loadConsole(rom: romName)
+// Workload mode.
+let scene = Scene.named(args.first ?? "") ?? Scene.all.last!
 
-// Warm up past the boot screen so the sample captures steady-state work.
-for _ in 0..<60 { nes.stepFrame() }
+let seconds = args.dropFirst().first.flatMap { Double($0) } ?? 15.0
 
-logErr("profiling for \(secondsToProfile)s, pid \(getpid())")
+let statsPath = args.dropFirst(2).first ?? scene.defaultStatsPath
 
-var frames = 0
-let start = Date()
-while Date().timeIntervalSince(start) < secondsToProfile {
-  nes.stepFrame()
-  frames += 1
-}
-
-let msPerFrame = Date().timeIntervalSince(start) * 1000.0 / Double(frames)
-logErr(String(format: "ran %d frames, %.2f ms/frame", frames, msPerFrame))
+runWorkload(scene: scene, seconds: seconds, statsPath: statsPath)

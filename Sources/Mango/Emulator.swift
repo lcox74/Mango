@@ -147,7 +147,8 @@ final class Emulator: ObservableObject {
       metrics = PerfMetrics(
         emulationMS: emaEmulationMS,
         fps: emaFPS,
-        budgetUsed: emaEmulationMS / Self.frameBudgetMS * 100.0
+        budgetUsed: emaEmulationMS / Self.frameBudgetMS * 100.0,
+        step: nes?.frameCount ?? 0
       )
     }
   }

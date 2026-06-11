@@ -9,6 +9,8 @@ struct PerfMetrics: Equatable {
   var fps: Double = 0
   /// Emulation time as a percentage of the 16.67ms frame budget. Over 100% = can't keep up.
   var budgetUsed: Double = 0
+  /// Number of frames stepped since power-on.
+  var step: Int = 0
 }
 
 /// Debug-only performance HUD. Toggle with the backtick (`) key.
@@ -25,6 +27,7 @@ struct MetricsOverlay: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 1) {
+      Text(String(format: "step %5d", metrics.step))
       Text(String(format: "emu  %5.2f ms", metrics.emulationMS))
       Text(String(format: "fps  %5.1f", metrics.fps))
       Text(String(format: "load %5.1f%%", metrics.budgetUsed))

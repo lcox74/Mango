@@ -10,11 +10,12 @@ swift := if path_exists(home / ".swiftly/bin/swift") == "true" { home / ".swiftl
 default:
      @just --list
 
-# Build of the whole project. Defaults to a debug build, but you can
-# set the target to release.
+# Build of the whole project. Defaults to a debug build, but you can set the
+# target to release.
 [doc('Build the project (debug or release)')]
 build target="debug":
     #!/usr/bin/env bash
+    set -o pipefail
 
     config=()
     if [ "{{target}}" = "release" ]; then
@@ -32,6 +33,7 @@ test:
 [doc('Launch the emulator (debug or release)')]
 run target="debug":
     #!/usr/bin/env bash
+    set -o pipefail
 
     config=()
     if [ "{{target}}" = "release" ]; then
@@ -40,14 +42,14 @@ run target="debug":
 
     {{swift}} run "${config[@]}" Mango
 
-# Launch the profiler to see what is chewing the time between frames
+# Profile the emulator with the macOS `sample` tool, one report per
+# predefined scene
 [doc('Profile the emulator (debug or release)')]
 profile target="debug":
     #!/usr/bin/env bash
+    set -o pipefail
 
-    report=/tmp/mango-sample.txt
-    duration=15   # seconds to sample
-    rows=29       # functions to print
+    duration=8   # seconds to sample each region
 
     config=()
     if [ "{{target}}" = "release" ]; then
@@ -55,27 +57,37 @@ profile target="debug":
     fi
 
     {{swift}} build "${config[@]}" --product Profiler
-    bin="$({{swift}} build "${config[@]}" --product Profiler --show-bin-path)"
+    bin="$({{swift}} build "${config[@]}" --product Profiler --show-bin-path)/Profiler"
 
-    "$bin/Profiler" &
-    pid=$!
-    disown   # stop bash reporting "Terminated" when we kill it below
-    sleep 1
-    sample "$pid" "$duration" -file "$report"
-    kill "$pid" 2>/dev/null || true
+    scenes=(start menu autoplay)
 
-    echo
-    # Reprint the "top of stack" section as "<samples>  <function>",
-    # sorted as the report already is, stopping after $rows lines.
-    awk -v rows="$rows" '
-        /Sort by top of stack/ { capture = 1; next }
-        capture && NF {
-            samples = $NF; $NF = ""
-            sub(/^[ \t]+/, ""); sub(/[ \t]+$/, "")
-            printf "%8s  %s\n", samples, $0
-            if (++shown == rows) exit
-        }
-    ' "$report"
+    # Sample each scene in turn
+    sampleFiles=()
+    for scene in "${scenes[@]}"; do
+        sampleFile="/tmp/mango-sample-${scene}.txt"
+        readyFile="/tmp/mango-sample-${scene}.ready"
+
+        # Clean previous run
+        rm -f "$sampleFile" "/tmp/mango-sample-${scene}.stats.json" "$readyFile"
+
+        # Run the workload a bit longer to outlive the sampler
+        "$bin" "$scene" "$(( duration + 2 ))" &
+        pid=$!
+
+        # Wait until workload is ready
+        while [ ! -f "$readyFile" ] && kill -0 "$pid" 2>/dev/null; do
+            sleep 0.05
+        done
+
+        # Sample the workload
+        sample "$pid" "$duration" -file "$sampleFile" >/dev/null
+        wait "$pid"
+
+        sampleFiles+=("$sampleFile")
+    done
+
+    # Render results
+    "$bin" report "${sampleFiles[@]}"
 
 # Remove build artifacts
 clean:
