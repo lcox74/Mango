@@ -138,10 +138,8 @@ public final class Console: MemoryBus {
   private func oamDMA(page: UInt8) {
     let base = UInt16(page) << 8
 
-    var i = 0
-    while i < 256 {
+    for i in 0..<256 {
       ppu.writeOAM(read(base + UInt16(i)))
-      i += 1
     }
 
     dmaStall += 513

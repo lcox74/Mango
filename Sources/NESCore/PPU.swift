@@ -303,10 +303,7 @@ public final class PPU {
 
     let height = spriteHeight
 
-    var i = 0
-    while i < 64 {
-      defer { i += 1 }
-
+    for i in 0..<64 {
       let y = Int(oam[i * 4])
       let diff = line - y
 
@@ -402,6 +399,8 @@ public final class PPU {
     var sprIsZero = false
 
     if showSprites && (x >= 8 || showSpritesLeft) {
+      // Manual counter rather than `for i in 0..<spriteCount`: this runs per
+      // visible pixel and the range iterator doesn't inline under `-Onone`.
       var i = 0
       while i < spriteCount {
         defer { i += 1 }
@@ -456,6 +455,8 @@ public final class PPU {
 
   /// Advance the PPU cycles by number of dots.
   public func step(_ dots: Int) {
+    // A manual counter beats `for _ in 0..<dots` here: in the `-Onone` build the
+    // range iterator's calls don't inline, and this is the per-dot hot loop.
     var n = 0
     while n < dots {
       stepDot()
