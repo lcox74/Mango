@@ -37,6 +37,19 @@ If you have Swift installed as well as the toolchain which can handle testing
 then you dont need it. The `justfile` reaches for the swiftly binaries first
 but falls back to the system default.
 
+### Profiling (coming soon)
+
+I'm planning a small profiling tool that leans on the macOS `sample` command.
+That binary lives at `/usr/bin/sample`, but on a machine without the developer
+tools it's just a shim that should prompt you to install them. So if you want
+to use the profiler you'll need Apple's command line tools:
+
+```sh
+xcode-select --install
+```
+
+You don't need a full XCode install for this, just the command line tools.
+
 ## Building
 
 Debug is the default, but it runs terribly due to the Swift runtime. Building in

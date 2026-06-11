@@ -36,6 +36,9 @@ run target="debug":
         {{swift}} run Mango
     fi
 
+profile:
+    {{swift}} run Profiler
+
 # Remove build artifacts
 clean:
     rm -rf .build

@@ -10,12 +10,14 @@ let package = Package(
     // Products define the executables and libraries a package produces, making them visible to other packages.
     .library(name: "NESCore", targets: ["NESCore"]),
     .executable(name: "Mango", targets: ["Mango"]),
+    .executable(name: "Profiler", targets: ["Profiler"]),
   ],
   targets: [
     // Targets are the basic building blocks of a package, defining a module or a test suite.
     // Targets can depend on other targets in this package and products from dependencies.
     .target(name: "NESCore"),
     .executableTarget(name: "Mango", dependencies: ["NESCore"]),
+    .executableTarget(name: "Profiler", dependencies: ["NESCore"]),
     .testTarget(
       name: "NESCoreTests",
       dependencies: ["NESCore"]
