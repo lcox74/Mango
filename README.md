@@ -37,19 +37,6 @@ If you have Swift installed as well as the toolchain which can handle testing
 then you dont need it. The `justfile` reaches for the swiftly binaries first
 but falls back to the system default.
 
-### Profiling (coming soon)
-
-I'm planning a small profiling tool that leans on the macOS `sample` command.
-That binary lives at `/usr/bin/sample`, but on a machine without the developer
-tools it's just a shim that should prompt you to install them. So if you want
-to use the profiler you'll need Apple's command line tools:
-
-```sh
-xcode-select --install
-```
-
-You don't need a full XCode install for this, just the command line tools.
-
 ## Building
 
 Debug is the default, but it runs terribly due to the Swift runtime. Building in
@@ -95,6 +82,23 @@ There's a test suite. I do need to extend on it.
 
 ```sh
 just test
+```
+
+### Profiling
+
+I'm working on a small profiler which can be used to help figure out if I am
+going crazy or not. Debug mode is insanely slow when running the game, and I
+wanted to figure out what the hell is going on.
+
+The profiler leans on the macOS `sample` command from their developer cli tools.
+The application itself just runs the emulator in a headless mode and then we use
+some bash commands to format the results.
+
+I'm going to be working on this a little bit to handle the reporting better,
+and so I can play with how the string manipulation is like in swift.
+
+```sh
+just profile
 ```
 
 ## License
