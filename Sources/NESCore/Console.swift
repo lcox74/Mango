@@ -15,6 +15,9 @@ public final class Console: MemoryBus {
   /// Debug number of NMIs serviced since power-on.
   public private(set) var nmiCount = 0
 
+  /// Debug number of frames stepped since power-on.
+  public private(set) var frameCount = 0
+
   public init(cartridge: Cartridge) {
     self.cartridge = cartridge
     self.ppu = PPU(cartridge: cartridge)
@@ -39,6 +42,7 @@ public final class Console: MemoryBus {
     while !ppu.frameComplete {
       clock()
     }
+    frameCount += 1
   }
 
   /// Execute one CPU instruction and the matching PPU dots.
@@ -105,6 +109,30 @@ public final class Console: MemoryBus {
     }
   }
 
+  // Savestate
+
+  /// Capture the entire console (RAM, CPU, PPU, controllers and bookkeeping) so
+  /// we can debug it later.
+  public func snapshot() -> ConsoleSnapshot {
+    ConsoleSnapshot(
+      ram: ram, dmaStall: dmaStall, nmiCount: nmiCount, frameCount: frameCount,
+      cpu: cpu.snapshot(), ppu: ppu.snapshot(),
+      controller1: controller1.snapshot(), controller2: controller2.snapshot(),
+    )
+  }
+
+  /// Rewind the console to a previously captured snapshot.
+  public func restore(_ s: ConsoleSnapshot) {
+    ram = s.ram
+    dmaStall = s.dmaStall
+    nmiCount = s.nmiCount
+    frameCount = s.frameCount
+    cpu.restore(s.cpu)
+    ppu.restore(s.ppu)
+    controller1.restore(s.controller1)
+    controller2.restore(s.controller2)
+  }
+
   /// $4014 OAM DMA: copy 256 bytes from CPU page into PPU OAM. This will
   // stall the CPU.
   private func oamDMA(page: UInt8) {
@@ -118,4 +146,16 @@ public final class Console: MemoryBus {
 
     dmaStall += 513
   }
+}
+
+/// An opaque, complete copy of a `Console`'s state for snapshots.
+public struct ConsoleSnapshot {
+  var ram: [UInt8]
+  var dmaStall: Int
+  var nmiCount: Int
+  var frameCount: Int
+  var cpu: CPUSnapshot
+  var ppu: PPUSnapshot
+  var controller1: ControllerSnapshot
+  var controller2: ControllerSnapshot
 }

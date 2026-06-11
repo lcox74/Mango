@@ -48,3 +48,23 @@ public final class Controller {
     return 0x40 | bit
   }
 }
+
+/// A copy of the controller's mutable shift-register state.
+struct ControllerSnapshot {
+  var pressedButtons: UInt8
+  var strobe: Bool
+  var shift: UInt8
+}
+
+extension Controller {
+  func snapshot() -> ControllerSnapshot {
+    ControllerSnapshot(pressedButtons: pressedButtons.rawValue, strobe: strobe, shift: shift)
+  }
+
+  func restore(_ s: ControllerSnapshot) {
+    pressedButtons = Button(rawValue: s.pressedButtons)
+
+    strobe = s.strobe
+    shift = s.shift
+  }
+}

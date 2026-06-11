@@ -550,3 +550,81 @@ public final class PPU {
     }
   }
 }
+
+/// A complete copy of the PPU's mutable state for snapshots.
+struct PPUSnapshot {
+  var fb: [UInt32]
+  var frameComplete: Bool
+  var nmiPending: Bool
+
+  var vram: [UInt8]
+  var palette: [UInt8]
+  var oam: [UInt8]
+
+  var ctrl: UInt8, mask: UInt8, status: UInt8, oamAddr: UInt8
+  var v: UInt16, t: UInt16, fineX: UInt8, writeToggle: Bool, readBuffer: UInt8
+  var scanline: Int, cycle: Int
+
+  var ntByte: UInt8, atByte: UInt8, bgLoByte: UInt8, bgHiByte: UInt8
+  var bgShiftLo: UInt16, bgShiftHi: UInt16, bgAttrShiftLo: UInt16, bgAttrShiftHi: UInt16
+
+  var spriteCount: Int
+  var spriteX: [Int], spriteLo: [UInt8], spriteHi: [UInt8]
+  var spriteAttr: [UInt8], spriteIsZero: [Bool]
+}
+
+extension PPU {
+  func snapshot() -> PPUSnapshot {
+    PPUSnapshot(
+      fb: fb, frameComplete: frameComplete, nmiPending: nmiPending,
+      vram: vram, palette: palette, oam: oam,
+      ctrl: ctrl, mask: mask, status: status, oamAddr: oamAddr,
+      v: v, t: t, fineX: fineX, writeToggle: writeToggle, readBuffer: readBuffer,
+      scanline: scanline, cycle: cycle,
+      ntByte: ntByte, atByte: atByte, bgLoByte: bgLoByte, bgHiByte: bgHiByte,
+      bgShiftLo: bgShiftLo, bgShiftHi: bgShiftHi,
+      bgAttrShiftLo: bgAttrShiftLo, bgAttrShiftHi: bgAttrShiftHi,
+      spriteCount: spriteCount,
+      spriteX: spriteX, spriteLo: spriteLo, spriteHi: spriteHi,
+      spriteAttr: spriteAttr, spriteIsZero: spriteIsZero,
+    )
+  }
+
+  func restore(_ s: PPUSnapshot) {
+    fb = s.fb
+    frameComplete = s.frameComplete
+    nmiPending = s.nmiPending
+    vram = s.vram
+    palette = s.palette
+    oam = s.oam
+    ctrl = s.ctrl
+    mask = s.mask
+    status = s.status
+    oamAddr = s.oamAddr
+    v = s.v
+    t = s.t
+    fineX = s.fineX
+    writeToggle = s.writeToggle
+    readBuffer = s.readBuffer
+    scanline = s.scanline
+    cycle = s.cycle
+    ntByte = s.ntByte
+    atByte = s.atByte
+    bgLoByte = s.bgLoByte
+    bgHiByte = s.bgHiByte
+    bgShiftLo = s.bgShiftLo
+    bgShiftHi = s.bgShiftHi
+    bgAttrShiftLo = s.bgAttrShiftLo
+    bgAttrShiftHi = s.bgAttrShiftHi
+    spriteCount = s.spriteCount
+    spriteX = s.spriteX
+    spriteLo = s.spriteLo
+    spriteHi = s.spriteHi
+    spriteAttr = s.spriteAttr
+    spriteIsZero = s.spriteIsZero
+
+    // Rebuild the decoded register fields from ctrl/mask.
+    decodeCtrl()
+    decodeMask()
+  }
+}

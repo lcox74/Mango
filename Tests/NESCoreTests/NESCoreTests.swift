@@ -72,3 +72,52 @@ private func makeCartridge(program: [UInt8]) throws -> Cartridge {
 
   #expect(nes.cpu.x == 0x03)
 }
+
+/// A program that keeps writing to RAM and ticking the PPU so a snapshot has to
+/// capture moving state, not just static registers.
+private func makeBusyCartridge() throws -> Cartridge {
+  try makeCartridge(
+    program: [
+      0xA2, 0x00,  // LDX #$00
+      0xE8,  // INX
+      0x8A,  // TXA
+      0x95, 0x00,  // STA $00,X
+      0x8D, 0x00, 0x20,  // STA $2000 (PPUCTRL)
+      0x4C, 0x02, 0x80,  // JMP $8002 (back to INX)
+    ],
+  )
+}
+
+@Test func snapshotRestoreRoundTrips() throws {
+  // The profiler relies on snapshot/restore being a "complete" copy: rewinding
+  // and replaying the same steps must land in the exact same place.
+  let nes = Console(cartridge: try makeBusyCartridge())
+
+  for _ in 0..<30 {
+    _ = nes.cpu.step()
+  }
+
+  let snap = nes.snapshot()
+
+  /// Step a fixed amount and fingerprint everything observable.
+  func replay() -> (UInt8, UInt8, UInt16, UInt16, UInt32) {
+    for _ in 0..<200 {
+      _ = nes.cpu.step()
+    }
+
+    let fb = nes.framebufferSnapshot().reduce(UInt32(0)) { $0 &* 31 &+ $1 }
+    var ram: UInt16 = 0
+
+    for a in 0..<UInt16(0x20) {
+      ram = ram &* 31 &+ UInt16(nes.read(a))
+    }
+
+    return (nes.cpu.a, nes.cpu.x, nes.cpu.pc, ram, fb)
+  }
+
+  let first = replay()
+  nes.restore(snap)
+  let second = replay()
+
+  #expect(first == second)
+}

@@ -534,3 +534,38 @@ public final class CPU {
   }
 
 }
+
+/// A complete copy of the CPU's mutable state.
+struct CPUSnapshot {
+  var a: UInt8, x: UInt8, y: UInt8, sp: UInt8, pc: UInt16
+  var cFlag: Bool, zFlag: Bool, iFlag: Bool, dFlag: Bool, vFlag: Bool, nFlag: Bool
+  var pageCrossed: Bool
+}
+
+extension CPU {
+  /// Capture every register and flag so the exact CPU state can be restored
+  /// later. Used by the profiler to loop a region without replaying from boot.
+  func snapshot() -> CPUSnapshot {
+    CPUSnapshot(
+      a: a, x: x, y: y, sp: sp, pc: pc,
+      cFlag: cFlag, zFlag: zFlag, iFlag: iFlag, dFlag: dFlag, vFlag: vFlag, nFlag: nFlag,
+      pageCrossed: pageCrossed,
+    )
+  }
+
+  /// Overwrite the CPU state with a previously captured snapshot.
+  func restore(_ s: CPUSnapshot) {
+    a = s.a
+    x = s.x
+    y = s.y
+    sp = s.sp
+    pc = s.pc
+    cFlag = s.cFlag
+    zFlag = s.zFlag
+    iFlag = s.iFlag
+    dFlag = s.dFlag
+    vFlag = s.vFlag
+    nFlag = s.nFlag
+    pageCrossed = s.pageCrossed
+  }
+}
