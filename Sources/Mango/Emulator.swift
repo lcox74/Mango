@@ -20,16 +20,17 @@ final class Emulator: ObservableObject {
 
   init() {
     do {
-      let candidate = URL(fileURLWithPath: "Spy vs Spy.nes")
-      if FileManager.default.fileExists(atPath: candidate.path) {
+      if let candidate = Bundle.module.url(forResource: "Spy vs Spy", withExtension: "nes") {
         nes = try Console(
           cartridge: Cartridge(
             data: [UInt8](Data(contentsOf: candidate))
           )
         )
+      } else {
+        fatalError("Unable to find the 'Spy vs Spy.nes' ROM from the bundle")
       }
     } catch {
-      fatalError("There is no 'Spy vs Spy.nes' ROM")
+      fatalError("Invalid 'Spy vs Spy.nes' ROM")
     }
   }
 

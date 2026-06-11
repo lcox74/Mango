@@ -47,11 +47,10 @@ just build            # debug build
 just build release    # release build
 ```
 
-## Running
-
 Due to the nature of ROMs and the Law, I'm not shipping the ROM in this repo.
-You'll have to get your own copy of it and place it in the root of this project.
-Once it is there then you can run it.
+You'll have to get your own copy of it and place it in the `./Source/Mango/`
+directory in this project. Once it is there then you can build and run it.
+
 
 ```sh
 just run              # debug

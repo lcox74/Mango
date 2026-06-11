@@ -28,8 +28,8 @@ build target="debug":
 test:
     {{swift}} test
 
-# Launch the emulator, this needs the `Spy vs Spy.nes` rom in the root
-# directory of the project to actually run.
+# Launch the emulator, this needs the `Spy vs Spy.nes` rom in the
+# `Sources/Mango/` directory so it gets bundled into the build at compile time.
 [doc('Launch the emulator (debug or release)')]
 run target="debug":
     #!/usr/bin/env bash

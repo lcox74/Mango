@@ -16,7 +16,11 @@ let package = Package(
     // Targets are the basic building blocks of a package, defining a module or a test suite.
     // Targets can depend on other targets in this package and products from dependencies.
     .target(name: "NESCore"),
-    .executableTarget(name: "Mango", dependencies: ["NESCore"]),
+    .executableTarget(
+      name: "Mango",
+      dependencies: ["NESCore"],
+      resources: [.copy("Spy vs Spy.nes")]
+    ),
     .executableTarget(name: "Profiler", dependencies: ["NESCore"]),
     .testTarget(
       name: "NESCoreTests",
